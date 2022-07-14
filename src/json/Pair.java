@@ -16,3 +16,39 @@ public class Pair <Value>{
         return this.key+":"+this.value.toString();
     }
 }
+/*
+
+{
+  "list":[
+    {
+      "pos": {
+        "x": 10,
+        "y": 20
+      },
+      "scale":{
+        "x": 100,
+        "y": 100
+      }
+    },
+    {
+      "pos": {
+        "x": 10,
+        "y": 20
+      },
+      "scale":{
+        "x": 100,
+        "y": 100
+      }
+    },
+    {
+      "pos": {
+        "x": 10,
+        "y": 20
+      },
+      "scale":{
+        "x": 100,
+        "y": 100
+      }
+    }]
+}
+ */

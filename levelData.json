@@ -1,15 +1,6 @@
 {
-  "last-name":"Roos",
-  "name":"Alfred",
-  "age":18,
-  "height":180.4,
-  "items":{
-    "item1":"socks",
-    "item2":"pants",
-    "backpack": {
-      "weight":5.0,
-      "size": 10,
-      "color": "black"
-    }
-  }
+  "sex": "male",
+  "wanttodie": true,
+  "toes": ["1",2,3,4]
+
 }
