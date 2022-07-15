@@ -9,36 +9,27 @@ import java.util.LinkedList;
 import java.util.concurrent.SynchronousQueue;
 
 public class JSON{
-    public java.util.LinkedList<Pair> pairs = new java.util.LinkedList<>();
-    public void add (Pair pair){
-        pairs.add(pair);
+    private char type1 = '{';
+    private char type2 = '}';
+    public JSON(){}
+    public JSON(String type){
+        if(type=="list"){
+            type1='[';
+            type2=']';
+        }
     }
 
-    public void add (String key,JSON json){
-        pairs.add(new Pair<JSON>(key,json));
-    }
 
     private String getRandomId(){
         Random r = new Random();
         return String.valueOf(r.nextFloat());
     }
 
-    public void remove(String key){
-        LinkedList<Pair> pairs = new LinkedList<>();
-        for(Pair p : this.pairs){
-            if(p.key != '"'+key+'"')
-                pairs.add(p);
-        }
-        this.pairs = pairs;
-    }
     private JSON get(HashMap<String,JSON> objects, int index){
         Object firstKey = objects.keySet().toArray()[index];
         return objects.get(firstKey);
     }
-    private ArrayList<String> getLists(HashMap<String,ArrayList<String>> objects, int index){
-        Object firstKey = objects.keySet().toArray()[index];
-        return objects.get(firstKey);
-    }
+
     private String getKey(HashMap<String,JSON> objects, int index){
         Object firstKey = objects.keySet().toArray()[index];
         return (String)firstKey;
@@ -62,7 +53,7 @@ public class JSON{
             }
         }
 
-        return myJson.replace(System.getProperty("line.separator"),"");
+        return myJson.replace("\n","");
     }
     public JSON parseFile(String path){
         Path filePath = Path.of(path);
@@ -71,14 +62,6 @@ public class JSON{
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-    public Pair getPair(String key){
-        for(Pair p : pairs){
-            if(p.key.equals("\""+key+"\"")){
-                return p;
-            }
-        }
-        return null;
     }
 
     private String adder(Stack<String> stack,int dep){
@@ -90,8 +73,8 @@ public class JSON{
 
         json = format(json); // format json
         System.out.println(json);
-        HashMap<String,JSON> objects = new HashMap<>(); // last in the array is the current
-        HashMap<String,ArrayList<String>> lists = new HashMap<>(); // last in the array is the current
+        Stack<Pair<JsonObject>> objects = new Stack<>(); // last in the array is the current
+        Stack<Pair<JsonList>> lists = new Stack<>(); // last in the array is the current
         JSON me = null; // first object
         int depth = -1; // object depth
         String key = "";
@@ -101,51 +84,56 @@ public class JSON{
         String current = "";
         Stack<String> inside = new Stack<>();
 
+
         for(char c : json.toCharArray()){
-            JSON currentObj = objects.size()>0?get(objects,objects.size()-1):null;
+            JsonObject currentObj = objects.size()>0?objects.peek().value:null;
             if(c=='['){
-                lists.put(key,new ArrayList<String>());
+                lists.add(new Pair<JsonList>(key,new JsonList()));
                 listDepth ++;
                 key = "";
                 checkingValue = false;
                 inside.push("array");
 
             } else if (c==']') {
-                getLists(lists,listDepth).add(key);
+                lists.peek().value.add(key);
                 key = "";
-                get(objects,depth).add(new Pair<String>((String) lists.keySet().toArray()[listDepth],getLists(lists,listDepth).toString()));
+                if(objects.size()>0){
+                    objects.peek().value.add(new Pair<JsonList>((String) lists.peek().key, lists.pop().value));
+                }
+                else {
+                    me = lists.pop().value;
+                }
                 listDepth--;
                 inside.pop();
             } else if (c == '{') {
                 inside.push("obj");
-                System.out.println("key = "+ key);
-                JSON j = new JSON();
-                objects.put((key!=""?key:"no key bram")+getRandomId(), j);
+                JsonObject j = new JsonObject();
+                objects.push(new Pair<JsonObject>((key!=""?key:"no key bram"), j));
                 key = "";
                 checkingValue = false;
                 depth++;
-                System.out.println(objects);
                 //System.out.println(getKey(objects,depth));
 
 
             } else if (c == '}') {
+                if (key != "" && value != "") {
+                    objects.peek().value.add(new Pair<Object>(key, value)); // should convert value to right type
+                    key =   "";
+                    value = "";
+                }
                 if(adder(inside,2) == "array"){
-                    getLists(lists,listDepth).add(get(objects,depth).toString());
+                    lists.peek().value.add(new ListItem<JsonObject>(objects.pop().value));
                     key = "";
                     value = "";
 
                 }
                 else {
-                    if (key != "" && value != "") {
-                        get(objects, depth).add(new Pair<Object>(key, value)); // should convert value to right type
-                        key =   "";
-                        value = "";
+
+                    if (depth == 0){
+                        me = objects.pop().value;
                     }
-                    if (depth == 0)
-                        me = get(objects, 0);
                     else {
-                        get(objects, depth - 1).add(getKey(objects, depth), get(objects, depth));
-                        objects.remove(getKey(objects, depth));
+                        objects.get(objects.size()-2).value.add(objects.peek().key,objects.pop().value);
                     }
                 }
                 depth--;
@@ -157,7 +145,7 @@ public class JSON{
 
                 if(!value.isEmpty()&&!key.isEmpty()&&checkingValue){
 
-                    get(objects, 0).add(new Pair<Object>(key, value)); // should convert value to right type
+                    objects.peek().value.add(new Pair<Object>(key, value)); // should convert value to right type
                     key = "";
                     value = "";
                     checkingValue = false;
@@ -174,19 +162,5 @@ public class JSON{
         return me;
     }
 
-    public String toString(){
 
-        String myString = "{\n";
-        int i = 0;
-        for (Pair pair:
-             pairs) {
-            if(i<pairs.size()-1)
-                myString += pair.toString()+",\n";
-            else
-                myString += pair.toString()+"\n";
-            i++;
-        }
-        myString+="}";
-        return myString;
-    }
 }
