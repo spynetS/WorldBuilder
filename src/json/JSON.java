@@ -1,13 +1,12 @@
 package json;
 
-import com.sun.jdi.Value;
 
-import javax.lang.model.util.SimpleElementVisitor6;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.LinkedList;
+import java.util.concurrent.SynchronousQueue;
 
 public class JSON{
     public java.util.LinkedList<Pair> pairs = new java.util.LinkedList<>();
@@ -17,6 +16,11 @@ public class JSON{
 
     public void add (String key,JSON json){
         pairs.add(new Pair<JSON>(key,json));
+    }
+
+    private String getRandomId(){
+        Random r = new Random();
+        return String.valueOf(r.nextFloat());
     }
 
     public void remove(String key){
@@ -68,7 +72,7 @@ public class JSON{
             throw new RuntimeException(e);
         }
     }
-    public Pair<Value> getPair(String key){
+    public Pair getPair(String key){
         for(Pair p : pairs){
             if(p.key.equals("\""+key+"\"")){
                 return p;
@@ -77,15 +81,14 @@ public class JSON{
         return null;
     }
 
-    private String adder(Stack<String> stack){
-        if(stack.size()>=1) return stack.get(stack.size()-1);
+    private String adder(Stack<String> stack,int dep){
+        if(stack.size()>=dep) return stack.get(stack.size()-dep);
         else return "";
     }
 
     public JSON parseString(String json){
 
         json = format(json); // format json
-
         System.out.println(json);
         HashMap<String,JSON> objects = new HashMap<>(); // last in the array is the current
         HashMap<String,ArrayList<String>> lists = new HashMap<>(); // last in the array is the current
@@ -115,38 +118,27 @@ public class JSON{
                 inside.pop();
             } else if (c == '{') {
                 inside.push("obj");
-                System.out.println(key);
-                System.out.println(inside.get(0));
-                if(adder(inside) == "array"){
-
-                    objects.put("arrsay", new JSON());
-                    key = "";
-                    checkingValue = false;
-
-                    depth++;
-                }else {
-                    objects.put(key, new JSON());
-                    key = "";
-                    checkingValue = false;
-                    depth++;
-                }
+                System.out.println("key = "+ key);
+                JSON j = new JSON();
+                objects.put((key!=""?key:"no key bram")+getRandomId(), j);
+                key = "";
+                checkingValue = false;
+                depth++;
+                System.out.println(objects);
+                //System.out.println(getKey(objects,depth));
 
 
             } else if (c == '}') {
-                if(adder(inside) == "array"){
-                    if (key != "" && value != "") {
-                        get(objects, depth).add(new Pair<Object>(key, value)); // should convert value to right type
-                    }
+                if(adder(inside,2) == "array"){
                     getLists(lists,listDepth).add(get(objects,depth).toString());
                     key = "";
                     value = "";
-                    objects.remove(getKey(objects, depth));
 
                 }
                 else {
                     if (key != "" && value != "") {
                         get(objects, depth).add(new Pair<Object>(key, value)); // should convert value to right type
-                        key = "";
+                        key =   "";
                         value = "";
                     }
                     if (depth == 0)
@@ -155,18 +147,17 @@ public class JSON{
                         get(objects, depth - 1).add(getKey(objects, depth), get(objects, depth));
                         objects.remove(getKey(objects, depth));
                     }
-                    checkingValue = false;
                 }
                 depth--;
                 inside.pop();
+                checkingValue = false;
+
 
             } else if (c == ',') {
 
-                if(value.isEmpty()&&!key.isEmpty()){
-                    getLists(lists,listDepth).add(key);
-                    key = "";
-                }else if(!value.isEmpty()&&!key.isEmpty()){
-                    get(objects, depth).add(new Pair<Object>(key, value)); // should convert value to right type
+                if(!value.isEmpty()&&!key.isEmpty()&&checkingValue){
+
+                    get(objects, 0).add(new Pair<Object>(key, value)); // should convert value to right type
                     key = "";
                     value = "";
                     checkingValue = false;
