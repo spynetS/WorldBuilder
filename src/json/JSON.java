@@ -72,7 +72,7 @@ public class JSON{
     public JSON parseString(String json){
 
         json = format(json); // format json
-        System.out.println(json);
+
         Stack<Pair<JsonObject>> objects = new Stack<>(); // last in the array is the current
         Stack<Pair<JsonList>> lists = new Stack<>(); // last in the array is the current
         JSON me = null; // first object
@@ -101,7 +101,12 @@ public class JSON{
                     objects.peek().value.add(new Pair<JsonList>((String) lists.peek().key, lists.pop().value));
                 }
                 else {
-                    me = lists.pop().value;
+                    if(listDepth==0)
+                        me = lists.pop().value;
+                    else
+                    {
+                        lists.get(lists.size()-2).value.add(lists.pop().value.objects);
+                    }
                 }
                 listDepth--;
                 inside.pop();
@@ -142,8 +147,11 @@ public class JSON{
 
 
             } else if (c == ',') {
-
-                if(!value.isEmpty()&&!key.isEmpty()&&checkingValue){
+                if(inside.peek()=="array"&&!key.isEmpty()){
+                    lists.peek().value.add(new ListItem<String>(key));
+                    key="";
+                }
+                else if(!value.isEmpty()&&!key.isEmpty()&&checkingValue){
 
                     objects.peek().value.add(new Pair<Object>(key, value)); // should convert value to right type
                     key = "";

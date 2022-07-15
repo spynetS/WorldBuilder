@@ -5,6 +5,11 @@ import java.util.LinkedList;
 public class JsonObject extends JSON{
 
     public java.util.LinkedList<Pair> pairs = new java.util.LinkedList<>();
+
+    public JsonObject(Pair x) {
+    }
+    public JsonObject(){}
+
     public void add (Pair pair){
         pairs.add(pair);
     }
