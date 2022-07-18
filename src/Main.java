@@ -3,6 +3,7 @@ import javagameengine.backend.Scene;
 import javagameengine.backend.input.Input;
 import javagameengine.backend.input.Keys;
 import javagameengine.components.GameObject;
+import javagameengine.msc.CameraMovement;
 import javagameengine.msc.Vector2;
 import json.*;
 
@@ -31,6 +32,8 @@ public class Main extends JavaGameEngine {
                 if(Input.isKeyPressed(Keys.ESCAPE)) getSaved();
             }
         };
+
+        s.getCamera().addChild(new CameraMovement());
 
         setSelectedScene(s);
 
@@ -68,11 +71,24 @@ public class Main extends JavaGameEngine {
         JsonList list = new JsonList();
         LinkedList<GameObject> objects = new LinkedList<>();
         list = (JsonList) list.parseFile("levelData.json");
+        System.out.println(list.objects.get(0).value);
+
+
         for(ListItem item : list.objects){
-            GameObject newG = new GameObject();
-            JsonObject o = (JsonObject) item.value;
-            newG.setPosition(new Vector2((Float) ((JsonObject)o.getPair("pos").value).getPair("x").value, (Float) ((JsonObject)o.getPair("pos").value).getPair("y").value));
-            objects.add(newG);
+            try{
+                GameObject newG = new GameObject();
+                JsonObject ob = ((JsonObject)((ListItem)item.value).value);
+                JsonObject pos = (JsonObject) ob.pairs.get(0).value;
+                JsonObject scale = (JsonObject) ob.pairs.get(1).value;
+                System.out.println(pos.pairs.get(0));
+
+                newG.setPosition(new Vector2((Float) pos.pairs.get(0).value, (Float) pos.pairs.get(1).value));
+                objects.add(newG);
+                getScene().components.add(new GameObject());
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
 
     return objects;
